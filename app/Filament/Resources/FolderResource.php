@@ -25,10 +25,10 @@ class FolderResource extends Resource
     protected static ?string $model = Folder::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedFolder;
-
     protected static string|\UnitEnum|null $navigationGroup = 'Drive';
-
     protected static ?string $navigationLabel = 'Virtual Folders';
+
+    public static function shouldRegisterNavigation(): bool { return false; }
 
     protected static ?string $recordTitleAttribute = 'name';
 

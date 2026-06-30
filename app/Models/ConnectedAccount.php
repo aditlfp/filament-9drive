@@ -13,13 +13,19 @@ class ConnectedAccount extends Model
 
     protected $fillable = [
         'user_id',
+        'workspace_id',
+        'provider_type',
+        'account_name',
         'google_email',
         'access_token',
         'refresh_token',
+        'credentials',
         'expires_at',
         'quota_total',
         'quota_used',
         'quota_refreshed_at',
+        'last_health_check_at',
+        'health_status',
         'status',
     ];
 
@@ -28,27 +34,43 @@ class ConnectedAccount extends Model
         return [
             'access_token' => 'encrypted',
             'refresh_token' => 'encrypted',
+            'credentials' => 'encrypted:array',
             'expires_at' => 'datetime',
             'quota_total' => 'integer',
             'quota_used' => 'integer',
             'quota_refreshed_at' => 'datetime',
+            'last_health_check_at' => 'datetime',
         ];
     }
 
-    /**
-     * @return BelongsTo<User, $this>
-     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    /**
-     * @return HasMany<File, $this>
-     */
+    public function workspace(): BelongsTo
+    {
+        return $this->belongsTo(Workspace::class);
+    }
+
     public function files(): HasMany
     {
         return $this->hasMany(File::class, 'storage_account_id');
+    }
+
+    public function virtualFiles(): HasMany
+    {
+        return $this->hasMany(VirtualFile::class, 'connected_account_id');
+    }
+
+    public function isExpired(): bool
+    {
+        return $this->expires_at?->isPast() ?? false;
+    }
+
+    public function isHealthy(): bool
+    {
+        return $this->health_status === 'healthy';
     }
 
     public function getQuotaAvailableAttribute(): ?int

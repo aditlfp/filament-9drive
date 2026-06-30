@@ -1,5 +1,3 @@
 <x-filament-panels::page>
-
-    <livewire:my-files-explorer />
-
+    @livewire('file-browser')
 </x-filament-panels::page>

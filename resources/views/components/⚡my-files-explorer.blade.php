@@ -1,11 +1,25 @@
 <?php
 
-use Livewire\Component;
-use Livewire\Attributes\Computed;
 use App\Models\File;
 use App\Models\Folder;
+use App\Services\SmartGoogleDriveUploadService;
+use Filament\Notifications\Notification;
+use Illuminate\Http\UploadedFile;
+use Livewire\Attributes\Computed;
+use Livewire\Attributes\On;
+use Livewire\Component;
+use Livewire\WithFileUploads;
 
 new class extends Component {
+    use WithFileUploads;
+
+    // No external listeners needed; modal controlled via wire:model
+    public function mount(): void
+    {
+        // Ensure user has a root folder and start there
+        $root = \App\Models\Folder::rootForUser(auth()->id());
+        $this->folderId = $root->id;
+    }
     public ?int $folderId = null;
     public array $breadcrumbs = []; // ✅ untuk navigasi back
     public string $view = 'grid';
@@ -13,18 +27,27 @@ new class extends Component {
     public string $newFolderName = '';
     public ?int $previewFileId = null;
     public bool $showPreviewModal = false;
+    public bool $showUploadModal = false;
+    public array $uploadedFiles = [];
+    public array $selectedFileIds = [];
 
     public function openFolder(int $folderId): void
     {
         // ✅ simpan history breadcrumb
-        $folder = Folder::find($folderId);
+        $folder = Folder::query()->ownedBy(auth()->id())->find($folderId);
+
+        if (! $folder) {
+            return;
+        }
+
         $this->breadcrumbs[] = [
             'id' => $this->folderId,
             'name' => empty($this->breadcrumbs) ? 'Root' : end($this->breadcrumbs)['name'] ?? 'Root',
         ];
         // Sebenarnya kita simpan nama folder yang sedang aktif sebelum pindah
         // Reset & rebuild lebih bersih:
-        $this->folderId = $folderId;
+        $this->folderId = $folder->id;
+        $this->clearSelection();
     }
 
     public function openPreview(int $fileId): void
@@ -71,12 +94,15 @@ new class extends Component {
         }
         $prev = array_pop($this->breadcrumbs);
         $this->folderId = $prev['id'];
+        $this->clearSelection();
     }
 
     public function goToRoot(): void
     {
-        $this->folderId = null;
+        $root = \App\Models\Folder::rootForUser(auth()->id());
+        $this->folderId = $root->id;
         $this->breadcrumbs = [];
+        $this->clearSelection();
     }
 
     public function setView(string $view): void
@@ -84,30 +110,157 @@ new class extends Component {
         $this->view = $view;
     }
 
+    public function openNewFolderModal(): void
+    {
+        $this->newFolderName = '';
+        $this->showNewFolderModal = true;
+        $this->dispatch('open-modal', id: 'new-folder-modal');
+    }
+
+    public function closeNewFolderModal(): void
+    {
+        $this->showNewFolderModal = false;
+        $this->dispatch('close-modal', id: 'new-folder-modal');
+    }
+
     public function createFolder(): void
     {
         $this->validate(['newFolderName' => 'required|string|max:255']);
-        Folder::create(['name' => $this->newFolderName, 'parent_id' => $this->folderId]);
+        Folder::create(['name' => trim($this->newFolderName), 'parent_id' => $this->folderId, 'user_id' => auth()->id()]);
+        unset($this->folders);
+        unset($this->sidebarFolders);
         $this->newFolderName = '';
         $this->showNewFolderModal = false;
+        $this->dispatch('close-modal', id: 'new-folder-modal');
+    }
+
+    public function toggleFileSelection(int $fileId): void
+    {
+        $file = File::query()
+            ->ownedBy(auth()->id())
+            ->where('folder_id', $this->folderId)
+            ->find($fileId);
+
+        if (! $file) {
+            return;
+        }
+
+        if (in_array($fileId, $this->selectedFileIds, true)) {
+            $this->selectedFileIds = array_values(array_diff($this->selectedFileIds, [$fileId]));
+
+            return;
+        }
+
+        $this->selectedFileIds[] = $fileId;
+    }
+
+    public function selectAllFilesInCurrentFolder(): void
+    {
+        $this->selectedFileIds = $this->files->pluck('id')->all();
+    }
+
+    public function clearSelection(): void
+    {
+        $this->selectedFileIds = [];
+    }
+
+    #[On('open-upload')]
+    public function openUploadModal(): void
+    {
+        $this->clearUploadedFiles();
+        $this->showUploadModal = true;
+        $this->dispatch('open-modal', id: 'upload-files-modal');
+    }
+
+    public function closeUploadModal(): void
+    {
+        $this->clearUploadedFiles();
+        $this->showUploadModal = false;
+        $this->dispatch('close-modal', id: 'upload-files-modal');
+    }
+
+    public function clearUploadedFiles(): void
+    {
+        $this->uploadedFiles = [];
+        $this->resetErrorBag('uploadedFiles');
+        $this->resetErrorBag('uploadedFiles.*');
+    }
+
+    public function updatedUploadedFiles(): void
+    {
+        $this->validate([
+            'uploadedFiles' => ['array'],
+            'uploadedFiles.*' => ['file', 'max:' . config('filemanager.upload.max_file_size', 102400)],
+        ]);
+    }
+
+    public function uploadFiles(SmartGoogleDriveUploadService $uploader): void
+    {
+        if (empty($this->uploadedFiles)) {
+            Notification::make()
+                ->title('No files selected')
+                ->warning()
+                ->send();
+
+            return;
+        }
+
+        $folder = Folder::query()->ownedBy(auth()->id())->find($this->folderId)
+            ?? Folder::rootForUser(auth()->id());
+
+        $uploadCount = 0;
+        $errors = [];
+
+        foreach ($this->uploadedFiles as $uploadedFile) {
+            if (! $uploadedFile instanceof UploadedFile) {
+                continue;
+            }
+
+            try {
+                $uploader->uploadUploadedFile($uploadedFile, $folder);
+                $uploadCount++;
+            } catch (\Throwable $exception) {
+                $errors[] = $uploadedFile->getClientOriginalName() . ': ' . $exception->getMessage();
+            }
+        }
+
+        if ($uploadCount > 0) {
+            unset($this->files);
+            $this->clearSelection();
+
+            Notification::make()
+                ->title($uploadCount . ' file(s) uploaded successfully')
+                ->success()
+                ->send();
+
+            $this->closeUploadModal();
+        }
+
+        if (! empty($errors)) {
+            Notification::make()
+                ->title('Some files could not be uploaded')
+                ->body(implode("\n", array_slice($errors, 0, 5)))
+                ->danger()
+                ->send();
+        }
     }
 
     #[Computed]
     public function folders()
     {
-        return Folder::query()->where('parent_id', $this->folderId)->orderBy('name')->get();
+        return Folder::query()->ownedBy(auth()->id())->where('parent_id', $this->folderId)->orderBy('name')->get();
     }
 
     #[Computed]
     public function files()
     {
-        return File::query()->where('folder_id', $this->folderId)->orderBy('name')->get();
+        return File::query()->ownedBy(auth()->id())->where('folder_id', $this->folderId)->orderBy('name')->get();
     }
 
     #[Computed]
     public function sidebarFolders()
     {
-        return Folder::query()->whereNull('parent_id')->orderBy('name')->get();
+        return Folder::ownedBy(auth()->id())->whereNull('parent_id')->orderBy('name')->get();
     }
 
     #[Computed]
@@ -116,7 +269,7 @@ new class extends Component {
         if (!$this->folderId) {
             return 'Root';
         }
-        return Folder::find($this->folderId)?->name ?? 'Root';
+        return Folder::query()->ownedBy(auth()->id())->find($this->folderId)?->name ?? 'Root';
     }
 
     public function render()
@@ -162,13 +315,35 @@ new class extends Component {
         {{-- Action Buttons --}}
         <div class="flex items-center gap-2">
             <x-filament::button color="warning" icon="heroicon-o-folder-plus"
-                wire:click="$set('showNewFolderModal', true)">
+                wire:click="openNewFolderModal">
                 New Folder
             </x-filament::button>
 
-            <x-filament::button color="warning" icon="heroicon-o-arrow-up-tray" wire:click="$dispatch('open-upload')">
+            <x-filament::button color="warning" icon="heroicon-o-arrow-up-tray" wire:click="openUploadModal">
                 Upload
             </x-filament::button>
+
+            @if ($this->files->isNotEmpty())
+                <x-filament::button color="gray" size="sm" wire:click="selectAllFilesInCurrentFolder">
+                    Select all
+                </x-filament::button>
+            @endif
+
+            @if (count($selectedFileIds) > 0)
+                <span class="text-sm text-gray-500">{{ count($selectedFileIds) }} selected</span>
+                <form method="POST" action="{{ route('file.download.bulk') }}" class="inline-flex">
+                    @csrf
+                    @foreach ($selectedFileIds as $selectedFileId)
+                        <input type="hidden" name="file_ids[]" value="{{ $selectedFileId }}" />
+                    @endforeach
+                    <x-filament::button type="submit" color="warning" size="sm" icon="heroicon-o-arrow-down-tray">
+                        Download selected
+                    </x-filament::button>
+                </form>
+                <x-filament::button color="gray" size="sm" wire:click="clearSelection">
+                    Clear
+                </x-filament::button>
+            @endif
 
             <x-filament::icon-button icon="heroicon-o-arrow-path" wire:click="$refresh" tooltip="Refresh" />
 
@@ -224,7 +399,17 @@ new class extends Component {
                             @if ($file->isImage()) wire:click="openPreview({{ $file->id }})"
             class="group flex flex-col items-center gap-3 p-6 rounded-xl border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition text-center cursor-pointer relative overflow-hidden"
         @else
-            class="flex flex-col items-center gap-3 p-6 rounded-xl border border-gray-200 hover:bg-gray-50 transition text-center cursor-default" @endif>
+            class="group flex flex-col items-center gap-3 p-6 rounded-xl border border-gray-200 hover:bg-gray-50 transition text-center cursor-default relative" @endif>
+                            <button type="button" wire:click.stop="toggleFileSelection({{ $file->id }})"
+                                class="absolute top-2 left-2 z-10 inline-flex items-center justify-center w-5 h-5 rounded border bg-white {{ in_array($file->id, $selectedFileIds, true) ? 'border-amber-500 text-amber-600' : 'border-gray-300 text-transparent' }}">
+                                <x-heroicon-o-check class="w-3 h-3" />
+                            </button>
+                            <a href="{{ $file->downloadUrl() }}" x-on:click.stop
+                                class="absolute bottom-2 right-2 z-10 inline-flex items-center justify-center w-8 h-8 rounded-lg bg-white border border-gray-200 text-gray-500 opacity-0 group-hover:opacity-100 hover:text-amber-600 transition"
+                                title="Download">
+                                <x-heroicon-o-arrow-down-tray class="w-4 h-4" />
+                            </a>
+
                             {{-- Thumbnail jika gambar --}}
                             @if ($file->isImage())
                                 <div
@@ -272,7 +457,12 @@ new class extends Component {
                             @if ($file->isImage()) wire:click="openPreview({{ $file->id }})"
             class="group flex items-center gap-3 px-3 py-3 hover:bg-blue-50 transition cursor-pointer"
         @else
-            class="flex items-center gap-3 px-3 py-3 hover:bg-gray-50 transition" @endif>
+            class="group flex items-center gap-3 px-3 py-3 hover:bg-gray-50 transition" @endif>
+                            <button type="button" wire:click.stop="toggleFileSelection({{ $file->id }})"
+                                class="inline-flex items-center justify-center w-5 h-5 rounded border bg-white {{ in_array($file->id, $selectedFileIds, true) ? 'border-amber-500 text-amber-600' : 'border-gray-300 text-transparent' }}">
+                                <x-heroicon-o-check class="w-3 h-3" />
+                            </button>
+
                             {{-- Thumbnail kecil untuk list view --}}
                             @if ($file->isImage())
                                 <div class="w-8 h-8 rounded overflow-hidden bg-gray-100 shrink-0">
@@ -288,6 +478,12 @@ new class extends Component {
                             @if ($file->isImage())
                                 <span class="text-xs text-gray-400 group-hover:text-blue-500 transition">Preview</span>
                             @endif
+
+                            <a href="{{ $file->downloadUrl() }}" x-on:click.stop
+                                class="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-gray-200 text-gray-500 hover:text-amber-600 transition"
+                                title="Download">
+                                <x-heroicon-o-arrow-down-tray class="w-4 h-4" />
+                            </a>
                         </div>
                     @endforeach
 
@@ -298,7 +494,7 @@ new class extends Component {
     </div>
 
     {{-- New Folder Modal --}}
-    <x-filament::modal id="new-folder-modal" :visible="$showNewFolderModal" width="sm">
+    <x-filament::modal id="new-folder-modal" wire:model="showNewFolderModal" width="sm">
         <x-slot name="heading">New Folder</x-slot>
 
         <x-filament::input.wrapper>
@@ -310,6 +506,83 @@ new class extends Component {
             <x-filament::button color="gray"
                 wire:click="$set('showNewFolderModal', false)">Cancel</x-filament::button>
             <x-filament::button color="warning" wire:click="createFolder">Create</x-filament::button>
+        </x-slot>
+    </x-filament::modal>
+
+    {{-- Upload Files Modal --}}
+    <x-filament::modal id="upload-files-modal" wire:model="showUploadModal" width="lg">
+        <x-slot name="heading">Upload Files</x-slot>
+
+        <x-slot name="description">
+            @php
+                $maxSizeMB = round(config('filemanager.upload.max_file_size', 102400) / 1024);
+            @endphp
+            Select one or more files to upload (max {{ $maxSizeMB }}MB per file)
+        </x-slot>
+
+        <div class="space-y-4">
+            <div x-data="{ isDragging: false }" x-on:dragover.prevent="isDragging = true"
+                x-on:dragleave.prevent="isDragging = false"
+                x-on:drop.prevent="isDragging = false; $refs.fileInput.files = $event.dataTransfer.files; $refs.fileInput.dispatchEvent(new Event('change'))"
+                class="relative border-2 border-dashed rounded-lg p-8 text-center transition-colors"
+                :class="isDragging ? 'border-primary-500 bg-primary-50' : 'border-gray-300'">
+                <input type="file" x-ref="fileInput" wire:model.live="uploadedFiles" multiple
+                    class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+
+                <div class="space-y-2" wire:loading.remove wire:target="uploadedFiles">
+                    <x-heroicon-o-cloud-arrow-up class="w-12 h-12 mx-auto text-gray-400" />
+                    <p class="text-sm text-gray-600">
+                        <span class="font-medium text-primary-600">Click to upload</span>
+                        or drag and drop
+                    </p>
+                    <p class="text-xs text-gray-500">Any file type supported</p>
+                </div>
+
+                <div class="space-y-2" wire:loading wire:target="uploadedFiles">
+                    <div class="w-12 h-12 mx-auto border-4 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
+                    <p class="text-sm font-medium text-primary-600">Processing files...</p>
+                    <p class="text-xs text-gray-500">Please wait while files are being prepared</p>
+                </div>
+            </div>
+
+            @error('uploadedFiles.*')
+                <p class="text-sm text-danger-600">{{ $message }}</p>
+            @enderror
+
+            @if (count($uploadedFiles) > 0)
+                <div class="space-y-2">
+                    <p class="text-sm font-medium text-gray-700">
+                        {{ count($uploadedFiles) }} file(s) ready to upload:
+                    </p>
+                    <ul class="text-sm text-gray-600 space-y-1 max-h-32 overflow-y-auto">
+                        @foreach ($uploadedFiles as $file)
+                            <li class="flex items-center gap-2">
+                                <x-heroicon-o-check-circle class="w-4 h-4 shrink-0 text-success-500" />
+                                <span class="truncate">{{ $file->getClientOriginalName() }}</span>
+                                <span class="text-xs text-gray-400">({{ Illuminate\Support\Number::fileSize($file->getSize()) }})</span>
+                            </li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+        </div>
+
+        <x-slot name="footerActions">
+            <x-filament::button wire:click="closeUploadModal" color="gray">
+                Cancel
+            </x-filament::button>
+            <x-filament::button wire:click="uploadFiles" wire:loading.attr="disabled"
+                wire:target="uploadedFiles, uploadFiles" :disabled="count($uploadedFiles) === 0">
+                <span wire:loading.remove wire:target="uploadedFiles, uploadFiles">
+                    @if (count($uploadedFiles) > 0)
+                        Upload {{ count($uploadedFiles) }} File(s)
+                    @else
+                        Select Files First
+                    @endif
+                </span>
+                <span wire:loading wire:target="uploadedFiles">Processing...</span>
+                <span wire:loading wire:target="uploadFiles">Uploading...</span>
+            </x-filament::button>
         </x-slot>
     </x-filament::modal>
 
@@ -338,6 +611,10 @@ new class extends Component {
             </x-filament::button>
 
             @if ($this->previewFile)
+                <x-filament::button color="gray" icon="heroicon-o-arrow-down-tray" tag="a"
+                    :href="$this->previewFile->downloadUrl()">
+                    Download
+                </x-filament::button>
                 <x-filament::button color="warning" icon="heroicon-o-arrow-top-right-on-square" tag="a"
                     :href="$this->previewFile->previewUrl()" target="_blank">
                     Open Full Size

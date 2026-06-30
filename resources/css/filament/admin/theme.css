@@ -3,3 +3,460 @@
 
 @source '../../../../app/Filament/**/*';
 @source '../../../../resources/views/filament/**/*';
+
+/* ============================================================
+   DESIGN.md — Discord Design System
+   Canvas:         #0a0d3a  (deep indigo)
+   Surface-indigo: #1e2353
+   Surface-onyx:   #23272a
+   Primary/Blurple:#5865f2
+   Green:          #35ed7e  (highest-intent CTA only)
+   Magenta:        #ec48bd
+   Link/Cyan:      #00b0f4
+   Ink:            #ffffff
+   Hairline:       #23272a
+   ============================================================ */
+
+/* --- Canvas & page background -------------------------------- */
+html,
+body,
+.fi-body,
+.fi-layout,
+.fi-main,
+.fi-main-ctn {
+    background-color: #0a0d3a !important;
+    color: #ffffff !important;
+}
+
+/* Subtle animated radial gradient mesh on main content area */
+.fi-main-ctn {
+    background:
+        radial-gradient(ellipse 60% 40% at 15% 20%, rgba(88,101,242,.12) 0%, transparent 70%),
+        radial-gradient(ellipse 50% 35% at 85% 75%, rgba(236,72,189,.09) 0%, transparent 65%),
+        #0a0d3a !important;
+}
+
+/* --- Sidebar -------------------------------------------------- */
+.fi-sidebar,
+.fi-sidebar-nav,
+aside[class*="fi-sidebar"] {
+    background-color: #0a0d3a !important;
+    border-right-color: #23272a !important;
+}
+
+/* Sidebar nav items */
+.fi-sidebar-item-button {
+    color: rgba(255,255,255,.7) !important;
+    border-radius: 8px !important;
+}
+.fi-sidebar-item-button:hover {
+    background-color: rgba(88,101,242,.15) !important;
+    color: #ffffff !important;
+}
+.fi-sidebar-item-button[aria-current="page"],
+.fi-sidebar-item-button.fi-active {
+    background-color: rgba(88,101,242,.25) !important;
+    color: #ffffff !important;
+}
+
+/* Sidebar group labels */
+.fi-sidebar-group-label {
+    color: rgba(255,255,255,.35) !important;
+    font-size: 11px !important;
+    letter-spacing: .08em !important;
+    text-transform: uppercase !important;
+}
+
+/* --- Topbar --------------------------------------------------- */
+.fi-topbar,
+header[class*="fi-topbar"] {
+    background-color: #0a0d3a !important;
+    border-bottom-color: #23272a !important;
+}
+
+/* --- Page header ---------------------------------------------- */
+.fi-header,
+.fi-page-header {
+    background-color: transparent !important;
+}
+.fi-header-heading,
+h1.fi-header-heading {
+    color: #ffffff !important;
+    font-weight: 700 !important;
+}
+.fi-header-subheading {
+    color: rgba(255,255,255,.55) !important;
+}
+
+/* --- Sections / Cards ----------------------------------------- */
+.fi-section,
+.fi-card,
+.fi-wi-stats-overview-stat,
+[class*="fi-section"],
+[class*="fi-card"] {
+    background-color: #1e2353 !important;
+    border-color: #23272a !important;
+    color: #ffffff !important;
+}
+
+.fi-section-header-heading,
+.fi-card-header-heading {
+    color: #ffffff !important;
+    font-weight: 600 !important;
+}
+.fi-section-description,
+.fi-card-description {
+    color: rgba(255,255,255,.55) !important;
+}
+
+/* --- Tables --------------------------------------------------- */
+.fi-ta-table,
+table {
+    background-color: transparent !important;
+}
+.fi-ta-header-cell,
+thead th {
+    background-color: #1e2353 !important;
+    color: rgba(255,255,255,.55) !important;
+    border-bottom-color: #23272a !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    text-transform: uppercase !important;
+    letter-spacing: .06em !important;
+}
+.fi-ta-row,
+tbody tr {
+    background-color: #1e2353 !important;
+    border-bottom-color: #23272a !important;
+}
+.fi-ta-row:hover,
+tbody tr:hover {
+    background-color: rgba(88,101,242,.1) !important;
+}
+.fi-ta-cell,
+tbody td {
+    color: rgba(255,255,255,.85) !important;
+    border-bottom-color: #23272a !important;
+}
+/* Empty state */
+.fi-ta-empty-state-icon,
+.fi-ta-empty-state-heading {
+    color: rgba(255,255,255,.4) !important;
+}
+.fi-ta-empty-state-description {
+    color: rgba(255,255,255,.3) !important;
+}
+
+/* --- Forms ---------------------------------------------------- */
+.fi-fo-field-wrp-label,
+label[class*="fi-fo"],
+.fi-fo-field-wrp label {
+    color: rgba(255,255,255,.8) !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+}
+
+.fi-input,
+.fi-select-input,
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="search"],
+input[type="url"],
+textarea,
+select {
+    background-color: #0a0d3a !important;
+    border-color: #23272a !important;
+    color: #ffffff !important;
+    border-radius: 8px !important;
+}
+.fi-input:focus,
+input:focus,
+textarea:focus,
+select:focus {
+    border-color: #5865f2 !important;
+    box-shadow: 0 0 0 2px rgba(88,101,242,.25) !important;
+    outline: none !important;
+}
+input::placeholder,
+textarea::placeholder {
+    color: rgba(255,255,255,.3) !important;
+}
+
+/* Input wrappers */
+.fi-input-wrp {
+    background-color: #0a0d3a !important;
+    border-color: #23272a !important;
+    border-radius: 8px !important;
+}
+
+/* Select */
+.fi-select-input {
+    background-color: #0a0d3a !important;
+    border-color: #23272a !important;
+    color: #ffffff !important;
+}
+
+/* Toggle (on = blurple) */
+.fi-toggle-input:checked + .fi-toggle-button {
+    background-color: #5865f2 !important;
+}
+
+/* --- Buttons -------------------------------------------------- */
+/* Primary → Blurple */
+.fi-btn-primary,
+button.fi-btn[data-fi-color="primary"] {
+    background-color: #5865f2 !important;
+    color: #ffffff !important;
+    border-color: #5865f2 !important;
+}
+.fi-btn-primary:hover,
+button.fi-btn[data-fi-color="primary"]:hover {
+    background-color: #4752c4 !important;
+    border-color: #4752c4 !important;
+}
+
+/* Success → Green (highest-intent only) */
+.fi-btn-success,
+button.fi-btn[data-fi-color="success"] {
+    background-color: #35ed7e !important;
+    color: #000000 !important;
+    border-color: #35ed7e !important;
+}
+
+/* Danger/Warning → Magenta */
+.fi-btn-danger,
+button.fi-btn[data-fi-color="danger"],
+.fi-btn-warning,
+button.fi-btn[data-fi-color="warning"] {
+    background-color: #ec48bd !important;
+    color: #ffffff !important;
+    border-color: #ec48bd !important;
+}
+
+/* Ghost / secondary / outlined */
+.fi-btn-secondary,
+button.fi-btn[data-fi-color="gray"],
+.fi-btn-ghost {
+    background-color: rgba(255,255,255,.06) !important;
+    color: rgba(255,255,255,.8) !important;
+    border-color: #23272a !important;
+}
+.fi-btn-secondary:hover,
+button.fi-btn[data-fi-color="gray"]:hover {
+    background-color: rgba(88,101,242,.15) !important;
+    color: #ffffff !important;
+}
+
+/* --- Badges --------------------------------------------------- */
+.fi-badge {
+    font-size: 11px !important;
+    font-weight: 500 !important;
+    letter-spacing: .04em !important;
+}
+.fi-badge[data-color="success"],
+.fi-color-success.fi-badge {
+    background-color: rgba(53,237,126,.15) !important;
+    color: #35ed7e !important;
+    border-color: rgba(53,237,126,.25) !important;
+}
+.fi-badge[data-color="danger"],
+.fi-color-danger.fi-badge {
+    background-color: rgba(236,72,189,.15) !important;
+    color: #ec48bd !important;
+    border-color: rgba(236,72,189,.25) !important;
+}
+.fi-badge[data-color="warning"],
+.fi-color-warning.fi-badge {
+    background-color: rgba(236,72,189,.12) !important;
+    color: #ec48bd !important;
+}
+.fi-badge[data-color="primary"],
+.fi-color-primary.fi-badge {
+    background-color: rgba(88,101,242,.2) !important;
+    color: #a5b4fc !important;
+}
+.fi-badge[data-color="gray"],
+.fi-color-gray.fi-badge {
+    background-color: rgba(255,255,255,.08) !important;
+    color: rgba(255,255,255,.6) !important;
+    border-color: rgba(255,255,255,.12) !important;
+}
+
+/* --- Modals --------------------------------------------------- */
+.fi-modal-window,
+.fi-modal-ctn {
+    background-color: #1e2353 !important;
+    border-color: #23272a !important;
+    color: #ffffff !important;
+}
+.fi-modal-header-heading {
+    color: #ffffff !important;
+    font-weight: 600 !important;
+}
+.fi-modal-description {
+    color: rgba(255,255,255,.55) !important;
+}
+/* Modal backdrop */
+.fi-modal-backdrop {
+    background-color: rgba(0,0,0,.65) !important;
+}
+
+/* --- Dropdowns / Action menus --------------------------------- */
+.fi-dropdown-panel,
+.fi-ac-grouped-actions-dropdown-panel {
+    background-color: #1e2353 !important;
+    border-color: #23272a !important;
+}
+.fi-dropdown-list-item-button {
+    color: rgba(255,255,255,.8) !important;
+}
+.fi-dropdown-list-item-button:hover {
+    background-color: rgba(88,101,242,.15) !important;
+    color: #ffffff !important;
+}
+
+/* --- Notifications / Toasts ----------------------------------- */
+.fi-notification {
+    background-color: #1e2353 !important;
+    border-color: #23272a !important;
+    color: #ffffff !important;
+}
+.fi-notification-title {
+    color: #ffffff !important;
+    font-weight: 600 !important;
+}
+.fi-notification-body {
+    color: rgba(255,255,255,.65) !important;
+}
+
+/* --- Pagination ---------------------------------------------- */
+.fi-pagination-item-button {
+    background-color: transparent !important;
+    color: rgba(255,255,255,.6) !important;
+    border-color: #23272a !important;
+}
+.fi-pagination-item-button:hover {
+    background-color: rgba(88,101,242,.15) !important;
+    color: #ffffff !important;
+}
+.fi-pagination-item-button[aria-current="page"] {
+    background-color: #5865f2 !important;
+    color: #ffffff !important;
+    border-color: #5865f2 !important;
+}
+
+/* --- Tabs ---------------------------------------------------- */
+.fi-tabs-tab {
+    color: rgba(255,255,255,.5) !important;
+    border-bottom-color: transparent !important;
+}
+.fi-tabs-tab:hover {
+    color: rgba(255,255,255,.85) !important;
+}
+.fi-tabs-tab[aria-selected="true"] {
+    color: #ffffff !important;
+    border-bottom-color: #5865f2 !important;
+}
+
+/* --- Links ---------------------------------------------------- */
+a.fi-link,
+.fi-ta-col-url a {
+    color: #00b0f4 !important;
+}
+a.fi-link:hover {
+    color: #38c4ff !important;
+}
+
+/* --- Dividers / hairlines ------------------------------------ */
+hr,
+.fi-hr,
+[class*="divide-"] > * + * {
+    border-color: #23272a !important;
+}
+
+/* --- Text color helpers -------------------------------------- */
+.text-gray-900 { color: #ffffff !important; }
+.text-gray-800 { color: rgba(255,255,255,.9) !important; }
+.text-gray-700 { color: rgba(255,255,255,.8) !important; }
+.text-gray-600 { color: rgba(255,255,255,.65) !important; }
+.text-gray-500 { color: rgba(255,255,255,.5) !important; }
+.text-gray-400 { color: rgba(255,255,255,.45) !important; }
+.text-gray-300 { color: rgba(255,255,255,.4) !important; }
+
+/* BG helpers used in blade views */
+.dark\:bg-gray-900,
+.bg-gray-900 { background-color: #0a0d3a !important; }
+.dark\:bg-gray-800,
+.bg-gray-800 { background-color: #1e2353 !important; }
+.dark\:bg-gray-700,
+.bg-gray-700 { background-color: #23272a !important; }
+
+/* Border helpers */
+.dark\:border-gray-700,
+.border-gray-700,
+.dark\:border-gray-600,
+.border-gray-600 { border-color: #23272a !important; }
+
+/* Ring (timeline connector etc.) */
+.dark\:ring-gray-900 { --tw-ring-color: #0a0d3a !important; }
+.ring-white { --tw-ring-color: #1e2353 !important; }
+
+/* bg-white cards used in old views */
+.bg-white { background-color: #1e2353 !important; }
+.border-gray-200 { border-color: #23272a !important; }
+
+/* Accent bg helpers */
+.dark\:bg-blue-900\/20,
+.bg-blue-50 { background-color: rgba(88,101,242,.15) !important; }
+.text-blue-600,
+.dark\:text-blue-400 { color: #5865f2 !important; }
+
+.dark\:bg-green-900\/20,
+.bg-green-50 { background-color: rgba(53,237,126,.12) !important; }
+.text-green-600,
+.dark\:text-green-400 { color: #35ed7e !important; }
+.bg-green-100 { background-color: rgba(53,237,126,.15) !important; }
+.text-green-700 { color: #35ed7e !important; }
+
+.dark\:bg-red-900\/20,
+.bg-red-50 { background-color: rgba(236,72,189,.12) !important; }
+.text-red-600,
+.dark\:text-red-400,
+.text-red-500 { color: #ec48bd !important; }
+
+.dark\:bg-amber-900\/20,
+.bg-amber-50 { background-color: rgba(88,101,242,.12) !important; }
+.text-amber-500,
+.text-amber-600 { color: #5865f2 !important; }
+.bg-amber-500 { background-color: #5865f2 !important; }
+.hover\:bg-amber-600:hover { background-color: #4752c4 !important; }
+
+.dark\:bg-purple-900\/20,
+.bg-purple-50 { background-color: rgba(236,72,189,.12) !important; }
+.text-purple-500,
+.text-purple-600 { color: #ec48bd !important; }
+
+.text-indigo-500 { color: #5865f2 !important; }
+.bg-indigo-500 { background-color: #5865f2 !important; }
+
+/* Timeline connector line */
+.bg-gray-200 { background-color: #23272a !important; }
+.dark\:bg-gray-700 { background-color: #23272a !important; }
+
+/* Icon circles in timeline */
+.bg-gray-100 { background-color: rgba(255,255,255,.06) !important; }
+.dark\:bg-gray-700 { background-color: rgba(255,255,255,.06) !important; }
+
+/* Select dropdown arrow color fix */
+select option {
+    background-color: #1e2353;
+    color: #ffffff;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #0a0d3a; }
+::-webkit-scrollbar-thumb { background: #23272a; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #5865f2; }

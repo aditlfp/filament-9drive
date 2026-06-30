@@ -79,6 +79,11 @@ class File extends Model
         return route('file.preview.image', $this);
     }
 
+    public function downloadUrl(): string
+    {
+        return route('file.download', $this);
+    }
+
     // Ikon berdasarkan mime type — untuk tampilan grid/list
     public function icon(): string
     {

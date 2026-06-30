@@ -28,10 +28,10 @@ class ConnectedAccountResource extends Resource
     protected static ?string $model = ConnectedAccount::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCircleStack;
-
     protected static ?string $navigationLabel = 'Drive Accounts';
-
     protected static string|\UnitEnum|null $navigationGroup = 'Drive';
+
+    public static function shouldRegisterNavigation(): bool { return false; }
 
     protected static ?string $modelLabel = 'Drive account';
 

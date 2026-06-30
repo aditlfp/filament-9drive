@@ -34,10 +34,13 @@ class FileResource extends Resource
     protected static ?string $model = File::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedDocument;
-
     protected static string|\UnitEnum|null $navigationGroup = 'Drive';
-
     protected static ?string $navigationLabel = 'File Browser';
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return false; // Hidden: use MyFiles page instead
+    }
 
     protected static ?string $recordTitleAttribute = 'name';
 

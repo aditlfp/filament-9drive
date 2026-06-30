@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Filament\Pages\Dashboard;
 use App\Filament\Widgets\DriveAccountStorageWidget;
 use App\Filament\Widgets\DriveStorageOverview;
+use App\Filament\Widgets\WorkspaceStorageOverview;
 use DutchCodingCompany\FilamentSocialite\FilamentSocialitePlugin;
 use DutchCodingCompany\FilamentSocialite\Provider;
 use Filament\Http\Middleware\Authenticate;
@@ -37,8 +38,11 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->login()
             ->colors([
-                'primary' => Color::Amber,
+                'primary' => Color::Blue,
             ])
+            ->brandName('9Drive')
+            ->brandLogo(fn () => view('filament.brand'))
+            ->favicon(asset('favicon.ico'))
             ->viteTheme('resources/css/filament/admin/theme.css')
             ->plugin(
                 FilamentSocialitePlugin::make()
@@ -69,9 +73,6 @@ class AdminPanelProvider extends PanelProvider
                             ->first();
                     })
             )
-            ->plugins([
-                FileManagerPlugin::make(),
-            ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([
@@ -80,8 +81,7 @@ class AdminPanelProvider extends PanelProvider
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([
                 AccountWidget::class,
-                DriveStorageOverview::class,
-                DriveAccountStorageWidget::class,
+                WorkspaceStorageOverview::class,
             ])
             ->middleware([
                 EncryptCookies::class,
